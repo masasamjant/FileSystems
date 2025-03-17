@@ -1,9 +1,7 @@
 ﻿using Masasamjant.FileSystems.Abstractions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Masasamjant.FileSystems.Backups
 {
@@ -99,9 +97,207 @@ namespace Masasamjant.FileSystems.Backups
         /// </summary>
         protected bool IsCanceled { get; set; }
 
+        /// <summary>
+        /// Run backup task.
+        /// </summary>
+        /// <returns>A <see cref="BackupTaskResult"/>.</returns>
+        public BackupTaskResult Run()
+        {
+            bool error = false;
+
+            BackupTaskResult? result = null;
+
+            try
+            {
+                CurrentDirectoryPath = null;
+                CurrentFilePath = null;
+
+                SetState(BackupTaskState.PreExecuting, true);
+
+                if (!IsCanceled)
+                {
+                    PreExecute();
+
+                    SetState(BackupTaskState.Executing, true);
+
+                    if (!IsCanceled)
+                    {
+                        result = Execute();
+                        SetState(BackupTaskState.PostExecuting, false);
+                        PostExecute();
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                var args = new BackupTaskErrorEventArgs(exception, State, CurrentDirectoryPath, CurrentFilePath);
+                OnError(args);
+                if (args.Handled && args.ErrorBehavior == BackupTaskErrorBehavior.Cancel)
+                    IsCanceled = true;
+                else
+                    error = true;
+            }
+            finally
+            {
+                BackupTaskState finalState;
+
+                if (IsCanceled || result == null)
+                    result = new BackupTaskResult(Properties.BackupMode, Properties, string.Empty);
+
+                if (error)
+                    finalState = BackupTaskState.Failed;
+                else if (IsCanceled)
+                    finalState = BackupTaskState.Canceled;
+                else
+                    finalState = BackupTaskState.Completed;
+
+                SetState(finalState, false);
+                result.SetFinalState(finalState);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Disposes current instance.
+        /// </summary>
         public void Dispose()
         {
-            throw new NotImplementedException();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Disposes current instance.
+        /// </summary>
+        /// <param name="disposing"><c>true</c> if disposing; <c>false</c> otherwise.</param>
+        protected virtual void Dispose(bool disposing) 
+        {
+            if (!IsDisposed)
+                IsDisposed = true;
+        }
+
+        /// <summary>
+        /// Checks if <see cref="IsDisposed"/> is <c>true</c> and if so then throws <see cref="ObjectDisposedException"/>.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">If <see cref="IsDisposed"/> is <c>true</c>.</exception>
+        protected void CheckDisposed()
+        {
+            if (IsDisposed)
+                throw new ObjectDisposedException(GetType().FullName);
+        }
+
+        /// <summary>
+        /// Derived classes must override to perform pre-execution state. This is state where
+        /// backup task should prepare itself.
+        /// </summary>
+        protected abstract void PreExecute();
+
+        /// <summary>
+        /// Derived classes must override to perform execution state. This is state where actual
+        /// backup should be done.
+        /// </summary>
+        /// <returns>A <see cref="BackupTaskResult"/>.</returns>
+        protected abstract BackupTaskResult Execute();
+
+        /// <summary>
+        /// Derived classes must override to perform post-execution state. This is state where
+        /// backup task can clean itself.
+        /// </summary>
+        protected abstract void PostExecute();
+
+        /// <summary>
+        /// Raises <see cref="Error"/> event.
+        /// </summary>
+        /// <param name="args">The <see cref="BackupTaskErrorEventArgs"/>.</param>
+        protected virtual void OnError(BackupTaskErrorEventArgs args)
+        {
+            Error?.Invoke(this, args);
+        }
+
+        /// <summary>
+        /// Raises <see cref="StateChanged"/> event.
+        /// </summary>
+        /// <param name="args">The <see cref="BackupTaskStateChangedEventArgs"/>.</param>
+        protected virtual void OnStateChanged(BackupTaskStateChangedEventArgs args)
+        {
+            StateChanged?.Invoke(this, args);
+        }
+
+        /// <summary>
+        /// Raises <see cref="FileBackup"/> event.
+        /// </summary>
+        /// <param name="args">The <see cref="BackupTaskFileEventArgs"/>.</param>
+        protected virtual void OnFileBackup(BackupTaskFileEventArgs args)
+        {
+            FileBackup?.Invoke(this, args);
+        }
+
+        /// <summary>
+        /// Creates backup from source file specified by <paramref name="sourceFile"/>.
+        /// </summary>
+        /// <param name="sourceFile">The <see cref="IFileInfo"/> of source file.</param>
+        /// <param name="destinationFilePath">The destination file path.</param>
+        /// <param name="backupDirectoryPath">The backup directory path.</param>
+        /// <param name="createDirectory"><c>true</c> to create directory of <paramref name="backupDirectoryPath"/>; <c>false</c> if directory already created.</param>
+        protected void CreateBackup(IFileInfo sourceFile, string destinationFilePath, string backupDirectoryPath, ref bool createDirectory)
+        {
+            EnsureCreateDirectory(backupDirectoryPath, ref createDirectory);
+            sourceFile.CopyTo(destinationFilePath, true);
+        }
+
+        /// <summary>
+        /// Ensure that directory specified by <paramref name="backupDirectoryPath"/> is created if <paramref name="createDirectory"/> is <c>true</c>.
+        /// </summary>
+        /// <param name="backupDirectoryPath">The backup directory path.</param>
+        /// <param name="createDirectory"><c>true</c> to create directory; <c>false</c> if already invoked for this.</param>
+        protected void EnsureCreateDirectory(string backupDirectoryPath, ref bool createDirectory)
+        {
+            if (createDirectory)
+            {
+                DirectoryOperations.CreateDirectory(backupDirectoryPath);
+                createDirectory = false;
+            }
+        }
+
+        /// <summary>
+        /// Handle file backup error.
+        /// </summary>
+        /// <param name="exception">The occurred exception.</param>
+        /// <returns>A <see cref="BackupTaskErrorEventArgs"/>.</returns>
+        protected BackupTaskErrorEventArgs HandleBackupFileError(Exception exception)
+        {
+            var args = new BackupTaskErrorEventArgs(exception, State, CurrentDirectoryPath, CurrentFilePath);
+            OnError(args);
+            return args;
+        }
+
+        /// <summary>
+        /// Computes SHA-256 hash value for specified <see cref="IFileInfo"/>.
+        /// </summary>
+        /// <param name="fileInfo">The <see cref="IFileInfo"/>.</param>
+        /// <returns>The SHA-256 for <paramref name="fileInfo"/>.</returns>
+        protected static string ComputeFileHash(IFileInfo fileInfo)
+            => ComputeFileHash(fileInfo.FullName, fileInfo.CreationTime, fileInfo.LastWriteTime);
+
+        private static string ComputeFileHash(string filePath, DateTime creationTime, DateTime listWriteTime)
+        {
+            string value = string.Concat(filePath.ToLowerInvariant(), creationTime.ToString(CultureInfo.InvariantCulture).ToLowerInvariant(), listWriteTime.ToString(CultureInfo.InvariantCulture).ToLowerInvariant());
+            byte[] buffer = Encoding.Unicode.GetBytes(value);
+            byte[] hash = SHA256.HashData(buffer);
+            return Convert.ToBase64String(hash);
+        }
+
+        private void SetState(BackupTaskState state, bool canCancel)
+        {
+            if (State != state)
+            {
+                State = state;
+                var args = new BackupTaskStateChangedEventArgs(State, CurrentDirectoryPath, CurrentFilePath, canCancel);
+                OnStateChanged(args);
+                if (args.CanCancel && args.Cancel)
+                    IsCanceled = true;
+            }
         }
     }
 }
