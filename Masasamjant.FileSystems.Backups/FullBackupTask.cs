@@ -49,7 +49,7 @@ namespace Masasamjant.FileSystems.Backups
             if (IsCanceled)
             {
                 if (DirectoryOperations.Exists(rootBackupDirectoryPath))
-                    DirectoryOperations.Delete(rootBackupDirectoryPath);
+                    DirectoryOperations.Delete(rootBackupDirectoryPath, Properties.IncludeSubDirectories);
 
                 return new BackupTaskResult(BackupMode.Full, Properties, string.Empty);
             }
@@ -78,7 +78,7 @@ namespace Masasamjant.FileSystems.Backups
 
             var sourceFiles = sourceDirectory.GetFiles();
 
-            var history = new BackupHistory(backupDirectoryPath);
+            var history = new BackupHistory();
 
             foreach (var sourceFile in sourceFiles)
             {
@@ -119,7 +119,7 @@ namespace Masasamjant.FileSystems.Backups
                 }
             }
 
-            BackupHistory.Save(history, FileOperations);
+            BackupHistory.Save(history, backupDirectoryPath, FileOperations);
 
             // If sub directories should be included in backup, then iterate all child directories.
             if (Properties.IncludeSubDirectories)

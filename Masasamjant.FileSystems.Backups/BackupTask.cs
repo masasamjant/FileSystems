@@ -315,6 +315,11 @@ namespace Masasamjant.FileSystems.Backups
             });
         }
 
+        protected static string GetFullBackupTimestamp(IDirectoryInfo directory)
+        {
+            return directory.Name.Split('_')[1];
+        }
+
         private static string ComputeFileHash(string filePath, DateTime creationTime, DateTime listWriteTime)
         {
             string value = string.Concat(filePath.ToLowerInvariant(), creationTime.ToString(CultureInfo.InvariantCulture).ToLowerInvariant(), listWriteTime.ToString(CultureInfo.InvariantCulture).ToLowerInvariant());

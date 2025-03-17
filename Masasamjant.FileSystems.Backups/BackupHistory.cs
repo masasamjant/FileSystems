@@ -14,16 +14,6 @@ namespace Masasamjant.FileSystems.Backups
 
         private Dictionary<string, string> Items { get; } = new Dictionary<string, string>();
 
-        internal BackupHistory(string backupDirectoryPath)
-        {
-            BackupDirectoryPath = backupDirectoryPath;
-        }
-
-        /// <summary>
-        /// Gets the backup directory path;
-        /// </summary>
-        public string BackupDirectoryPath { get; }
-
         /// <summary>
         /// Gets the count of items in backup history.
         /// </summary>
@@ -67,10 +57,10 @@ namespace Masasamjant.FileSystems.Backups
         {
             string backupHistoryFilePath = Path.Combine(backupDirectoryPath, BackupHistoryFileName);
 
-            BackupHistory history = new BackupHistory(backupHistoryFilePath);
+            BackupHistory history = new BackupHistory();
 
             if (!fileOperations.Exists(backupHistoryFilePath))
-                return new BackupHistory(backupDirectoryPath);
+                return new BackupHistory();
 
             BackupTask.RemoveHiddenReadOnlyAttribute(backupHistoryFilePath, fileOperations);
             
@@ -107,13 +97,14 @@ namespace Masasamjant.FileSystems.Backups
         /// Save backup history.
         /// </summary>
         /// <param name="history">The backup history.</param>
+        /// <param name="backupDirectoryPath">The backup directory path.</param>
         /// <param name="fileOperations">The file operations.</param>
-        public static void Save(BackupHistory history, IFileOperations fileOperations)
+        public static void Save(BackupHistory history, string backupDirectoryPath, IFileOperations fileOperations)
         {
             if (history.Count == 0)
                 return;
 
-            var backupHistoryFilePath = Path.Combine(history.BackupDirectoryPath, BackupHistoryFileName);
+            var backupHistoryFilePath = Path.Combine(backupDirectoryPath, BackupHistoryFileName);
 
             if (fileOperations.Exists(backupHistoryFilePath))
                 BackupTask.RemoveHiddenReadOnlyAttribute(backupHistoryFilePath, fileOperations);
@@ -136,6 +127,20 @@ namespace Masasamjant.FileSystems.Backups
             }
 
             BackupTask.AddHiddenReadOnlyAttribute(backupHistoryFilePath, fileOperations);
+        }
+
+        /// <summary>
+        /// Merge several <see cref="BackupHistory"/> instances in to single one.
+        /// </summary>
+        /// <param name="histories">The backup histories to merge.</param>
+        /// <returns>A <paramref name="histories"/> merged into single <see cref="BackupHistory"/>.</returns>
+        public static BackupHistory Merge(IEnumerable<BackupHistory> histories)
+        {
+            var merge = new BackupHistory();
+            foreach (var history in histories)
+                foreach (var keyValue in history.Items)
+                    merge.Set(keyValue.Key, keyValue.Value);
+            return merge;
         }
 
         private static string ComputeContentHash(string content)
