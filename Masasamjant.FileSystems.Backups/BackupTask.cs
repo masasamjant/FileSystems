@@ -280,6 +280,41 @@ namespace Masasamjant.FileSystems.Backups
         protected static string ComputeFileHash(IFileInfo fileInfo)
             => ComputeFileHash(fileInfo.FullName, fileInfo.CreationTime, fileInfo.LastWriteTime);
 
+        public static void AddHiddenReadOnlyAttribute(string filePath, IFileOperations fileOperations)
+        {
+            var attributes = fileOperations.GetAttributes(filePath);
+            attributes |= FileAttributes.Hidden;
+            attributes |= FileAttributes.ReadOnly;
+            fileOperations.SetAttributes(filePath, attributes);
+        }
+
+        public static void RemoveHiddenReadOnlyAttribute(string filePath, IFileOperations fileOperations)
+        {
+            var attributes = fileOperations.GetAttributes(filePath);
+            attributes &= ~FileAttributes.Hidden;
+            attributes &= ~FileAttributes.ReadOnly;
+            fileOperations.SetAttributes(filePath, attributes);
+        }
+
+        /// <summary>
+        /// Gets the timestamp string of current local time.
+        /// </summary>
+        /// <returns>A timestamp string of current local time.</returns>
+        protected static string GetTimestampString()
+        {
+            DateTime dt = DateTime.Now;
+
+            return string.Concat(new string[]
+            {
+                dt.Year.ToString(),
+                dt.Month.ToString().PadLeft(2, '0'),
+                dt.Day.ToString().PadLeft(2, '0'),
+                dt.Hour.ToString().PadLeft(2, '0'),
+                dt.Minute.ToString().PadLeft(2, '0'),
+                dt.Second.ToString().PadLeft(2, '0')
+            });
+        }
+
         private static string ComputeFileHash(string filePath, DateTime creationTime, DateTime listWriteTime)
         {
             string value = string.Concat(filePath.ToLowerInvariant(), creationTime.ToString(CultureInfo.InvariantCulture).ToLowerInvariant(), listWriteTime.ToString(CultureInfo.InvariantCulture).ToLowerInvariant());
