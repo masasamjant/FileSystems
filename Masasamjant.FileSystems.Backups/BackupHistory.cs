@@ -109,7 +109,7 @@ namespace Masasamjant.FileSystems.Backups
             if (fileOperations.Exists(backupHistoryFilePath))
                 BackupTask.RemoveHiddenReadOnlyAttribute(backupHistoryFilePath, fileOperations);
 
-            using (var stream = fileOperations.GetStream(backupHistoryFilePath, FileMode.Open, FileAccess.Read))
+            using (var stream = fileOperations.GetStream(backupHistoryFilePath, FileMode.Create, FileAccess.Write))
             using (var writer = new StreamWriter(stream))
             {
                 var sb = new StringBuilder();

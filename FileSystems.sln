@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Masasamjant.FileSystems", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Masasamjant.FileSystems.Backups", "Masasamjant.FileSystems.Backups\Masasamjant.FileSystems.Backups.csproj", "{C01590DD-667B-4E3F-A86E-8CA58AF6CE29}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Masasamjant.BackupManager", "Masasamjant.BackupManager\Masasamjant.BackupManager.csproj", "{7BC46AF9-D070-4A37-B7D7-E6C7F17F25A8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,6 +25,10 @@ Global
 		{C01590DD-667B-4E3F-A86E-8CA58AF6CE29}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C01590DD-667B-4E3F-A86E-8CA58AF6CE29}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C01590DD-667B-4E3F-A86E-8CA58AF6CE29}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7BC46AF9-D070-4A37-B7D7-E6C7F17F25A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7BC46AF9-D070-4A37-B7D7-E6C7F17F25A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7BC46AF9-D070-4A37-B7D7-E6C7F17F25A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7BC46AF9-D070-4A37-B7D7-E6C7F17F25A8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -30,6 +36,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{B84E366F-F943-4EFF-8B40-D99C36FAB260} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{C01590DD-667B-4E3F-A86E-8CA58AF6CE29} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{7BC46AF9-D070-4A37-B7D7-E6C7F17F25A8} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A3E7F663-A3A7-45C6-B0FD-58B146BA445E}
