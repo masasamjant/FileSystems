@@ -315,7 +315,7 @@ namespace Masasamjant.FileSystems.Backups
             });
         }
 
-        protected static string GetFullBackupTimestamp(IDirectoryInfo directory)
+        internal static string GetFullBackupTimestamp(IDirectoryInfo directory)
         {
             return directory.Name.Split('_')[1];
         }
