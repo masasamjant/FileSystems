@@ -17,9 +17,13 @@ namespace Masasamjant.FileSystems.Backups
         /// </summary>
         /// <param name="properties">The <see cref="BackupProperties"/>.</param>
         /// <param name="fileSystem">The <see cref="IFileSystem"/>.</param>
+        /// <exception cref="ArgumentException">If <see cref="BackupProperties.BackupMode"/> of <paramref name="properties"/> is <see cref="BackupMode.Continuous"/>.</exception>
         public FullBackupTask(BackupProperties properties, IFileSystem fileSystem) 
             : base(properties, fileSystem)
         {
+            if (properties.BackupMode == BackupMode.Continuous)
+                throw new ArgumentException("There is not need for full backup when using continuous backup mode.", nameof(properties));
+
             rootBackupDirectoryName = string.Empty;
             rootBackupDirectoryPath = string.Empty;
         }

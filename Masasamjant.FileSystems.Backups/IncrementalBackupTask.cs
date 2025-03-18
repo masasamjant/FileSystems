@@ -3,48 +3,50 @@
 namespace Masasamjant.FileSystems.Backups
 {
     /// <summary>
-    /// Represents backup task that creates differential backup based on specified <see cref="BackupProperties"/>.
+    /// Represents backup task that creates incremental backup based on specified <see cref="BackupProperties"/>.
     /// </summary>
-    public sealed class DifferentialBackupTask : BackupTask
+    public sealed class IncrementalBackupTask : BackupTask
     {
         /// <summary>
         /// Initializes new instance of the <see cref="DifferentialBackupTask"/> class.
         /// </summary>
         /// <param name="properties">The <see cref="BackupProperties"/>.</param>
         /// <param name="fullBackupDirectory">The <see cref="IDirectoryInfo"/> of base full backup or <c>null</c>, if there is no base full backup.</param>
+        /// <param name="incrementalBackupDirectories">The incremental backup directories.</param>
         /// <param name="fileSystem">The <see cref="IFileSystem"/>.</param>
-        /// <exception cref="ArgumentException">If <see cref="BackupProperties.BackupMode"/> of <paramref name="properties"/> is not <see cref="BackupMode.Differential"/>.</exception>
-        public DifferentialBackupTask(BackupProperties properties, IDirectoryInfo? fullBackupDirectory, IFileSystem fileSystem)
+        /// <exception cref="ArgumentException">If <see cref="BackupProperties.BackupMode"/> of <paramref name="properties"/> is not <see cref="BackupMode.Incremental"/>.</exception>
+        public IncrementalBackupTask(BackupProperties properties, IDirectoryInfo? fullBackupDirectory, IEnumerable<IDirectoryInfo> incrementalBackupDirectories, IFileSystem fileSystem)
             : base(properties, fileSystem)
         {
-            if (properties.BackupMode != BackupMode.Differential)
-                throw new ArgumentException("The properties are not for differential backup.", nameof(properties));
+            if (properties.BackupMode != BackupMode.Incremental)
+                throw new ArgumentException("The properties are not for incremental backup.", nameof(properties));
 
             FullBackupDirectory = fullBackupDirectory;
+            IncrementalBackupDirectories = incrementalBackupDirectories;
         }
 
-        /// <summary>
-        /// Gets the <see cref="IDirectoryInfo"/> of the base full backup.
-        /// </summary>
         public IDirectoryInfo? FullBackupDirectory { get; }
+
+        public IEnumerable<IDirectoryInfo> IncrementalBackupDirectories { get; }
 
         protected override void PreExecute()
         {
             CheckDisposed();
-
-            if (IsCanceled) 
+            if (IsCanceled)
                 return;
         }
 
         protected override BackupTaskResult Execute()
         {
             CheckDisposed();
-
+            
             if (IsCanceled)
                 return new BackupTaskResult(BackupMode.Full, Properties, string.Empty);
 
-            // Before differential backup can be done there must be full backup at base.
-            if (FullBackupDirectory == null || !FullBackupDirectory.Exists)
+            var previousBackupHistories = LoadCompleteBackupHistory();
+
+            // For incremental backup there must be full backup or previous incremental backups. If not then create new full backup.
+            if (FullBackupDirectory == null || !FullBackupDirectory.Exists || previousBackupHistories.Count == 0)
             {
                 using (var task = new FullBackupTask(Properties, FileSystem))
                 {
@@ -63,28 +65,24 @@ namespace Masasamjant.FileSystems.Backups
                     }
                 }
             }
-            else 
+            else
             {
-                // There was full backup so it is possible to make differential backup.
-
-                BackupHistory previousBackupHistory = LoadCompleteBackupHistory(FullBackupDirectory);
-
                 var sourceDirectory = DirectoryOperations.GetDirectory(Properties.SourceDirectoryPath);
                 var destinationDirectory = DirectoryOperations.GetDirectory(Properties.DestinationDirectoryPath);
-                var diffBackupDirectoryName = string.Format(DifferentialBackupDirectoryPathFormat, sourceDirectory.Name, GetFullBackupTimestamp(FullBackupDirectory), GetTimestampString());
-                var diffBackupDirectoryPath = Path.Combine(destinationDirectory.FullName, diffBackupDirectoryName);
+                var incrementalBackupDirectoryName = string.Format(IncrementalBackupDirectoryPathFormat, sourceDirectory.Name, GetFullBackupTimestamp(FullBackupDirectory), GetTimestampString(), GetIncrementalCount());
+                var incrementalBackupDirectoryPath = Path.Combine(destinationDirectory.FullName, incrementalBackupDirectoryName);
 
-                BackupDirectory(sourceDirectory, diffBackupDirectoryPath, previousBackupHistory);
+                BackupDirectory(sourceDirectory, incrementalBackupDirectoryPath, previousBackupHistories);
 
                 if (IsCanceled)
                 {
-                    if (DirectoryOperations.Exists(diffBackupDirectoryPath))
-                        DirectoryOperations.Delete(diffBackupDirectoryPath, Properties.IncludeSubDirectories);
+                    if (DirectoryOperations.Exists(incrementalBackupDirectoryPath))
+                        DirectoryOperations.Delete(incrementalBackupDirectoryPath, Properties.IncludeSubDirectories);
 
                     return new BackupTaskResult(BackupMode.Full, Properties, string.Empty);
                 }
 
-                return new BackupTaskResult(BackupMode.Differential, Properties, diffBackupDirectoryPath);
+                return new BackupTaskResult(BackupMode.Incremental, Properties, incrementalBackupDirectoryPath);
             }
         }
 
@@ -102,9 +100,9 @@ namespace Masasamjant.FileSystems.Backups
                 throw new BackupException($"Cannot backup to existing folder {backupDirectoryPath}.");
 
             bool createDirectory = true;
-            bool noPreviousHistory = previousBackupHistory.Count == 0;
-            var sourceFiles = sourceDirectory.GetFiles();
+            bool noPreviousBackupHistory = previousBackupHistory.Count == 0;
             var history = new BackupHistory();
+            var sourceFiles = sourceDirectory.GetFiles();
 
             foreach (var sourceFile in sourceFiles)
             {
@@ -114,15 +112,13 @@ namespace Masasamjant.FileSystems.Backups
                     CurrentFilePath = sourceFile.FullName;
                     var destinationFileName = sourceFile.Name;
                     var destinationFilePath = Path.Combine(backupDirectoryPath, destinationFileName);
-
-                    // Compute hash used to verify if file needs backup or not.
                     var sourceFileHash = ComputeFileHash(sourceFile);
 
                     // Create backup when:
                     // - there is no previous history at all
                     // - file is not present in history
-                    // - file hash is present in history but mismatch
-                    bool createBackup = noPreviousHistory ||
+                    // - file hash is present in history but hashes mismatch
+                    bool createBackup = noPreviousBackupHistory ||
                         !previousBackupHistory.Contains(sourceFile.FullName) ||
                         sourceFileHash != previousBackupHistory.Get(sourceFile.FullName);
 
@@ -136,7 +132,6 @@ namespace Masasamjant.FileSystems.Backups
                 catch (Exception exception)
                 {
                     var args = HandleBackupFileError(exception);
-
                     if (args.Handled)
                     {
                         if (args.ErrorBehavior == BackupTaskErrorBehavior.Cancel)
@@ -159,14 +154,12 @@ namespace Masasamjant.FileSystems.Backups
 
             BackupHistory.Save(history, backupDirectoryPath, FileOperations);
 
-            // If sub directories should be included in backup, then iterate all child directories.
             if (Properties.IncludeSubDirectories)
             {
                 var childDirectories = sourceDirectory.GetDirectories();
-                
+
                 if (childDirectories.Any())
                 {
-                    // Since there are some child directories, lets ensure that parent backup directory is created.
                     EnsureCreateDirectory(backupDirectoryPath, ref createDirectory);
 
                     foreach (var childDirectory in childDirectories)
@@ -198,31 +191,41 @@ namespace Masasamjant.FileSystems.Backups
                 throw e.Error;
         }
 
-        private BackupHistory LoadCompleteBackupHistory(IDirectoryInfo fullBackupDirectory)
+        private int GetIncrementalCount() => IncrementalBackupDirectories.Count() + 1;
+
+        private BackupHistory LoadCompleteBackupHistory()
         {
-            if (Properties.IncludeSubDirectories)
+            var histories = new List<BackupHistory>();
+
+            // Load history in full backup folder.
+            if (FullBackupDirectory != null && FullBackupDirectory.Exists)
             {
-                List<BackupHistory> histories = new List<BackupHistory>();
-                LoadBackupHistories(fullBackupDirectory, histories);
-                return BackupHistory.Merge(histories);
+                histories.Add(BackupHistory.Load(FullBackupDirectory.FullName, FileOperations));
+
+                if (Properties.IncludeSubDirectories)
+                    LoadBackupHistories(FullBackupDirectory.GetDirectories(), histories);
             }
-            else
-            {
-                return BackupHistory.Load(fullBackupDirectory.FullName, FileOperations);
+
+            // Then get incremental backup folders and load history.
+            foreach (var incrementalBackupDirectory in IncrementalBackupDirectories)
+            { 
+                histories.Add(BackupHistory.Load(incrementalBackupDirectory.FullName, FileOperations));
+                if (Properties.IncludeSubDirectories)
+                    LoadBackupHistories(incrementalBackupDirectory.GetDirectories(), histories);
             }
+
+            return BackupHistory.Merge(histories);
         }
 
-        private void LoadBackupHistories(IDirectoryInfo directory, List<BackupHistory> histories)
+        private void LoadBackupHistories(IEnumerable<IDirectoryInfo> directories, List<BackupHistory> histories)
         {
-            var history = BackupHistory.Load(directory.FullName, FileOperations);
-
-            if (history.Count > 0)
-                histories.Add(history);
-
-            var childDirectories = directory.GetDirectories();
-
-            foreach (var childDirectory in childDirectories)
-                LoadBackupHistories(childDirectory, histories);
+            foreach (var directory in directories)
+            {
+                var history = BackupHistory.Load(directory.FullName, FileOperations);
+                if (history.Count > 0)
+                    histories.Add(history);
+                LoadBackupHistories(directory.GetDirectories(), histories);
+            }
         }
     }
 }
