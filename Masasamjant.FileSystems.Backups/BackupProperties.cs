@@ -1,4 +1,6 @@
-﻿namespace Masasamjant.FileSystems.Backups
+﻿using System.Text.Json.Serialization;
+
+namespace Masasamjant.FileSystems.Backups
 {
     /// <summary>
     /// Represents properties of backup.
@@ -46,30 +48,41 @@
         }
 
         /// <summary>
+        /// Initializes new empty instance of the <see cref="BackupProperties"/> class.
+        /// </summary>
+        public BackupProperties()
+        { }
+
+        /// <summary>
         /// Gets the backup name.
         /// </summary>
-        public string BackupName { get; internal set; }
+        [JsonInclude]
+        public string BackupName { get; internal set; } = string.Empty;
 
         /// <summary>
         /// Gets the backup mode.
         /// </summary>
+        [JsonInclude]
         public BackupMode BackupMode { get; internal set; }
 
         /// <summary>
         /// Gets the source directory path. The path to folder to take backup.
         /// </summary>
-        public string SourceDirectoryPath { get; internal set; }
+        [JsonInclude]
+        public string SourceDirectoryPath { get; internal set; } = string.Empty;
 
         /// <summary>
         /// Gets the destination directory path. The path to solder to save backup.
         /// </summary>
-        public string DestinationDirectoryPath { get; internal set; }
+        [JsonInclude]
+        public string DestinationDirectoryPath { get; internal set; } = string.Empty;
 
         /// <summary>
         /// Gets whether or not sub-directories of <see cref="SourceDirectoryPath"/> is included in backup. 
         /// If <c>false</c>, then only backup files in <see cref="SourceDirectoryPath"/>; otherwise backup
         /// also directory structure with files.
         /// </summary>
+        [JsonInclude]
         public bool IncludeSubDirectories { get; internal set; }
     }
 }
