@@ -8,6 +8,7 @@ namespace Masasamjant.BackupManager
     public partial class MainForm : Form
     {
         private readonly IFileSystem fileSystem;
+        private const string FileDialogFilter = "Task (*.btask)|*.json|All (*.*)|*.*\"";
 
         public MainForm()
         {
@@ -73,8 +74,7 @@ namespace Masasamjant.BackupManager
                 var properties = new BackupProperties(textBoxName.Text, mode, textBoxSource.Text, textBoxDestination.Text, checkIncludeSubFolders.Checked);
                 var json = JsonSerializer.Serialize(properties);
                 savePropertiesDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                savePropertiesDialog.FileName = properties.BackupName + ".json";
-                savePropertiesDialog.Filter = "JSON (*.json)|*.json|All (*.*)|*.*\"";
+                savePropertiesDialog.Filter = FileDialogFilter;
 
                 if (savePropertiesDialog.ShowDialog() == DialogResult.OK)
                 {
@@ -133,7 +133,7 @@ namespace Masasamjant.BackupManager
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
             openPropertiesDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            openPropertiesDialog.Filter = "JSON (*.json)|*.json|All (*.*)|*.*\"";
+            openPropertiesDialog.Filter = FileDialogFilter;
 
             if (openPropertiesDialog.ShowDialog() == DialogResult.OK)
             {
