@@ -101,8 +101,19 @@ namespace Masasamjant.FileSystems.Backups
         /// Run backup task.
         /// </summary>
         /// <returns>A <see cref="BackupTaskResult"/>.</returns>
+        /// <exception cref="BackupPropertiesException">
+        /// If source directory of <see cref="Properties"/> does not exist.
+        /// -or-
+        /// If destination directory of <see cref="Properties"/> does not exist.
+        /// -or-
+        /// If destination directory is sub-directory of the source directory.
+        /// -or-
+        /// If source directory is sub-directory of the destination directory.
+        /// </exception>
         public BackupTaskResult Run()
         {
+            ValidateBackupProperties();
+
             bool error = false;
 
             BackupTaskResult? result = null;
@@ -280,22 +291,6 @@ namespace Masasamjant.FileSystems.Backups
         protected static string ComputeFileHash(IFileInfo fileInfo)
             => ComputeFileHash(fileInfo.FullName, fileInfo.CreationTime, fileInfo.LastWriteTime);
 
-        public static void AddHiddenReadOnlyAttribute(string filePath, IFileOperations fileOperations)
-        {
-            var attributes = fileOperations.GetAttributes(filePath);
-            attributes |= FileAttributes.Hidden;
-            attributes |= FileAttributes.ReadOnly;
-            fileOperations.SetAttributes(filePath, attributes);
-        }
-
-        public static void RemoveHiddenReadOnlyAttribute(string filePath, IFileOperations fileOperations)
-        {
-            var attributes = fileOperations.GetAttributes(filePath);
-            attributes &= ~FileAttributes.Hidden;
-            attributes &= ~FileAttributes.ReadOnly;
-            fileOperations.SetAttributes(filePath, attributes);
-        }
-
         /// <summary>
         /// Gets the timestamp string of current local time.
         /// </summary>
@@ -320,6 +315,22 @@ namespace Masasamjant.FileSystems.Backups
             return directory.Name.Split('_')[1];
         }
 
+        internal static void AddHiddenReadOnlyAttribute(string filePath, IFileOperations fileOperations)
+        {
+            var attributes = fileOperations.GetAttributes(filePath);
+            attributes |= FileAttributes.Hidden;
+            attributes |= FileAttributes.ReadOnly;
+            fileOperations.SetAttributes(filePath, attributes);
+        }
+
+        internal static void RemoveHiddenReadOnlyAttribute(string filePath, IFileOperations fileOperations)
+        {
+            var attributes = fileOperations.GetAttributes(filePath);
+            attributes &= ~FileAttributes.Hidden;
+            attributes &= ~FileAttributes.ReadOnly;
+            fileOperations.SetAttributes(filePath, attributes);
+        }
+
         private static string ComputeFileHash(string filePath, DateTime creationTime, DateTime listWriteTime)
         {
             string value = string.Concat(filePath.ToLowerInvariant(), creationTime.ToString(CultureInfo.InvariantCulture).ToLowerInvariant(), listWriteTime.ToString(CultureInfo.InvariantCulture).ToLowerInvariant());
@@ -337,6 +348,31 @@ namespace Masasamjant.FileSystems.Backups
                 OnStateChanged(args);
                 if (args.CanCancel && args.Cancel)
                     IsCanceled = true;
+            }
+        }
+
+        private void ValidateBackupProperties()
+        {
+            var sourceDirectory = DirectoryOperations.GetDirectory(Properties.SourceDirectoryPath);
+
+            if (!sourceDirectory.Exists)
+                throw new BackupPropertiesException("The source directory does not exist.", Properties);
+
+            var destinationDirectory = DirectoryOperations.GetDirectory(Properties.DestinationDirectoryPath);
+
+            if (!destinationDirectory.Exists)
+                throw new BackupPropertiesException("The destination directory does not exist.", Properties);
+
+            foreach (var childDirectory in sourceDirectory.GetDirectories())
+            {
+                if (childDirectory.FullName == destinationDirectory.FullName)
+                    throw new BackupPropertiesException("The destination directory cannot be sub-directory of the source directory.", Properties);
+            }
+
+            foreach (var childDirectory in destinationDirectory.GetDirectories())
+            {
+                if (childDirectory.FullName == sourceDirectory.FullName)
+                    throw new BackupPropertiesException("The source directory cannot be sub-directory of the destination directory.", Properties);
             }
         }
     }
