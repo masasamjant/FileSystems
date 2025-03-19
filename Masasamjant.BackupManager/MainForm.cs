@@ -73,7 +73,8 @@ namespace Masasamjant.BackupManager
             {
                 var properties = new BackupProperties(textBoxName.Text, mode, textBoxSource.Text, textBoxDestination.Text, checkIncludeSubFolders.Checked);
                 var json = JsonSerializer.Serialize(properties);
-                savePropertiesDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                var initialDirectory = GetInitialBackupTaskFolder();
+                savePropertiesDialog.InitialDirectory = initialDirectory;
                 savePropertiesDialog.Filter = FileDialogFilter;
 
                 if (savePropertiesDialog.ShowDialog() == DialogResult.OK)
@@ -83,6 +84,13 @@ namespace Masasamjant.BackupManager
                     {
                         writer.Write(json);
                         writer.Flush();
+                    }
+
+                    var directoryPath = Path.GetDirectoryName(savePropertiesDialog.FileName);
+
+                    if (!string.IsNullOrWhiteSpace(directoryPath) && directoryPath != initialDirectory)
+                    {
+                        SaveInitialBackupTaskFolder(directoryPath);
                     }
                 }
             }
@@ -132,7 +140,7 @@ namespace Masasamjant.BackupManager
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            openPropertiesDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            openPropertiesDialog.InitialDirectory = GetInitialBackupTaskFolder();
             openPropertiesDialog.Filter = FileDialogFilter;
 
             if (openPropertiesDialog.ShowDialog() == DialogResult.OK)
@@ -158,6 +166,22 @@ namespace Masasamjant.BackupManager
                 }
             }
 
+        }
+
+        private string GetInitialBackupTaskFolder()
+        {
+            var settings = Properties.Settings.Default;
+            var latestBackupTaskFolder = settings.LatestBackupTaskFolder;
+            if (!string.IsNullOrWhiteSpace(latestBackupTaskFolder) && fileSystem.DirectoryOperations.Exists(latestBackupTaskFolder))
+                return latestBackupTaskFolder;
+            return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        }
+
+        private static void SaveInitialBackupTaskFolder(string directoryPath)
+        {
+            var settings = Properties.Settings.Default;
+            settings.LatestBackupTaskFolder = directoryPath;
+            settings.Save();
         }
     }
 }
