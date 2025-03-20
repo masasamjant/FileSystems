@@ -51,13 +51,28 @@ namespace Masasamjant.BackupManager
                     try
                     {
                         task.FileBackup += OnBackupTaskFileBackup;
+                        task.Error += OnBackupTaskError;
                         task.Run();
                     }
                     finally
                     {
                         task.FileBackup -= OnBackupTaskFileBackup;
+                        task.Error -= OnBackupTaskError;
                     }
                 }
+            }
+        }
+
+        private void OnBackupTaskError(object? sender, BackupTaskErrorEventArgs e)
+        {
+            using (var dialog = new ErrorDialog(e))
+            {
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    e.Handled = true;
+                }
+                else
+                    e.Handled = false;
             }
         }
 

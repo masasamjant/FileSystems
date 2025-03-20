@@ -37,6 +37,6 @@
         /// Gets or sets whether or not backup should be canceled. 
         /// </summary>
         /// <remarks>Have no meaning if <see cref="CanCancel"/> is <c>false</c>.</remarks>
-        public bool Cancel { get; set; }
+        public virtual bool Cancel { get; set; }
     }
 }

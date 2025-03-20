@@ -69,9 +69,11 @@
             Controls.Add(labelVersion);
             Controls.Add(labelDescription);
             Controls.Add(labelTitle);
+            FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "AboutDialog";
+            ShowInTaskbar = false;
             Text = "About";
             Load += AboutDialog_Load;
             ResumeLayout(false);
