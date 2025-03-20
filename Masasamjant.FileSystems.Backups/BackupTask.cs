@@ -11,19 +11,34 @@ namespace Masasamjant.FileSystems.Backups
     public abstract class BackupTask : IDisposable
     {
         /// <summary>
-        /// Format of full backup directory path.
+        /// Prefix of name of created full backup folder.
         /// </summary>
-        protected const string FullBackupDirectoryPathFormat = "{0}_{1}_F";
+        internal const string FullPrefix = "FULL-";
 
         /// <summary>
-        /// Format of diffential backup directory path.
+        /// Prefix of name of created differential backup folder.
         /// </summary>
-        protected const string DifferentialBackupDirectoryPathFormat = "{0}_{1}_{2}_D";
+        internal const string DiffPrefix = "DIFF-";
 
         /// <summary>
-        /// Format of incremental backup directory path.
+        /// Prefix of name of created incremental backup folder.
         /// </summary>
-        protected const string IncrementalBackupDirectoryPathFormat = "{0}_{1}_{2}_I_{3}";
+        internal const string IncrPrefix = "INCR-";
+
+        /// <summary>
+        /// Format of full backup directory path. {1} = timestamp, {0} = source directory.
+        /// </summary>
+        protected const string FullBackupDirectoryPathFormat = FullPrefix + "{1}-{0}";
+
+        /// <summary>
+        /// Format of diffential backup directory path. {1} = full timestamp, {0} = source directory, {2} = diff timestamp.
+        /// </summary>
+        protected const string DifferentialBackupDirectoryPathFormat = DiffPrefix + "{1}-{0}-{2}";
+
+        /// <summary>
+        /// Format of incremental backup directory path. {1} = full timestamp, {0} = source directory, {2} = incr timestamp, {3} = incr counter.
+        /// </summary>
+        protected const string IncrementalBackupDirectoryPathFormat = IncrPrefix + "{1}-{0}-{2}-{3}";
 
         /// <summary>
         /// Notifies when error occurs in task.
@@ -310,9 +325,23 @@ namespace Masasamjant.FileSystems.Backups
             });
         }
 
+        /// <summary>
+        /// Gets the timestamp string of the full backup directory.
+        /// </summary>
+        /// <param name="directory">The full backup directory.</param>
+        /// <returns>A timestamp string or empty, if <paramref name="directory"/> is not valid full backup directory.</returns>
         internal static string GetFullBackupTimestamp(IDirectoryInfo directory)
         {
-            return directory.Name.Split('_')[1];
+            if (directory.Name.StartsWith(FullPrefix))
+            {
+                var name = directory.Name.Replace(FullPrefix, "");
+                int index = name.IndexOf('-');
+                if (index == 14)
+                    return name.Substring(0, index);
+            }
+
+            return string.Empty;
+            //return directory.Name.Split('_')[1];
         }
 
         internal static void AddHiddenReadOnlyAttribute(string filePath, IFileOperations fileOperations)
