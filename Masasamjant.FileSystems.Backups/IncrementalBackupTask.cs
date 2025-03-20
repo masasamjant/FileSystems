@@ -25,8 +25,14 @@ namespace Masasamjant.FileSystems.Backups
             IncrementalBackupDirectories = incrementalBackupDirectories;
         }
 
+        /// <summary>
+        /// Gets the <see cref="IDirectoryInfo"/> of the base full backup.
+        /// </summary>
         public IDirectoryInfo? FullBackupDirectory { get; }
 
+        /// <summary>
+        /// Gets the <see cref="IDirectoryInfo"/>s of the previous incremental backups.
+        /// </summary>
         public IEnumerable<IDirectoryInfo> IncrementalBackupDirectories { get; }
 
         protected override void PreExecute()
@@ -43,6 +49,7 @@ namespace Masasamjant.FileSystems.Backups
             if (IsCanceled)
                 return new BackupTaskResult(BackupMode.Full, Properties, string.Empty);
 
+            // First load complete history from previous full backup and all incremental backups done after that.
             var previousBackupHistories = LoadCompleteBackupHistory();
 
             // For incremental backup there must be full backup or previous incremental backups. If not then create new full backup.
@@ -67,17 +74,20 @@ namespace Masasamjant.FileSystems.Backups
             }
             else
             {
+                // Create incremental backup root directory path.
                 var sourceDirectory = DirectoryOperations.GetDirectory(Properties.SourceDirectoryPath);
                 var destinationDirectory = DirectoryOperations.GetDirectory(Properties.DestinationDirectoryPath);
                 var incrementalBackupDirectoryName = string.Format(IncrementalBackupDirectoryPathFormat, sourceDirectory.Name, GetFullBackupTimestamp(FullBackupDirectory), GetTimestampString(), GetIncrementalCount());
                 var incrementalBackupDirectoryPath = Path.Combine(destinationDirectory.FullName, incrementalBackupDirectoryName);
 
+                // Backup root directory.
                 BackupDirectory(sourceDirectory, incrementalBackupDirectoryPath, previousBackupHistories);
 
+                // Check if operation was canceled. If so, then try delete destination folder.
                 if (IsCanceled)
                 {
                     if (DirectoryOperations.Exists(incrementalBackupDirectoryPath))
-                        DirectoryOperations.Delete(incrementalBackupDirectoryPath, Properties.IncludeSubDirectories);
+                        DirectoryOperations.TryDelete(incrementalBackupDirectoryPath, Properties.IncludeSubDirectories);
 
                     return new BackupTaskResult(BackupMode.Full, Properties, string.Empty);
                 }
@@ -110,8 +120,12 @@ namespace Masasamjant.FileSystems.Backups
                 {
                     CurrentDirectoryPath = sourceFile.DirectoryName;
                     CurrentFilePath = sourceFile.FullName;
+
+                    // Create destination file path.
                     var destinationFileName = sourceFile.Name;
                     var destinationFilePath = Path.Combine(backupDirectoryPath, destinationFileName);
+
+                    // Compute hash used to verify if file needs backup or not.
                     var sourceFileHash = ComputeFileHash(sourceFile);
 
                     // Create backup when:
@@ -124,8 +138,13 @@ namespace Masasamjant.FileSystems.Backups
 
                     if (createBackup)
                     {
+                        // Create the actual backup.
                         CreateBackup(sourceFile, destinationFilePath, backupDirectoryPath, ref createDirectory);
+
+                        // Store backup history.
                         history.Set(sourceFile.FullName, sourceFileHash);
+
+                        // Raise event to notify that backup was done.
                         OnFileBackup(new BackupTaskFileEventArgs(backupDirectoryPath, destinationFilePath, CurrentDirectoryPath, CurrentFilePath));
                     }
                 }
@@ -152,16 +171,20 @@ namespace Masasamjant.FileSystems.Backups
                 }
             }
 
+            // Save backup history.
             BackupHistory.Save(history, backupDirectoryPath, FileOperations);
 
+            // If sub directories should be included in backup, then iterate all child directories.
             if (Properties.IncludeSubDirectories)
             {
                 var childDirectories = sourceDirectory.GetDirectories();
 
                 if (childDirectories.Any())
                 {
+                    // Since there are some child directories, lets ensure that parent backup directory is created.
                     EnsureCreateDirectory(backupDirectoryPath, ref createDirectory);
 
+                    // Backup each child directory and eventually the whole tree.
                     foreach (var childDirectory in childDirectories)
                     {
                         var childBackupDirectoryPath = Path.Combine(backupDirectoryPath, childDirectory.Name);

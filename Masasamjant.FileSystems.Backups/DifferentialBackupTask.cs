@@ -67,19 +67,23 @@ namespace Masasamjant.FileSystems.Backups
             {
                 // There was full backup so it is possible to make differential backup.
 
+                // First load complete history from previous full backup.
                 BackupHistory previousBackupHistory = LoadCompleteBackupHistory(FullBackupDirectory);
 
+                // Create differential backup root directory path.
                 var sourceDirectory = DirectoryOperations.GetDirectory(Properties.SourceDirectoryPath);
                 var destinationDirectory = DirectoryOperations.GetDirectory(Properties.DestinationDirectoryPath);
                 var diffBackupDirectoryName = string.Format(DifferentialBackupDirectoryPathFormat, sourceDirectory.Name, GetFullBackupTimestamp(FullBackupDirectory), GetTimestampString());
                 var diffBackupDirectoryPath = Path.Combine(destinationDirectory.FullName, diffBackupDirectoryName);
 
+                // Backup root directory.
                 BackupDirectory(sourceDirectory, diffBackupDirectoryPath, previousBackupHistory);
 
+                // Check if operation was canceled. If so, then try delete destination folder.
                 if (IsCanceled)
                 {
                     if (DirectoryOperations.Exists(diffBackupDirectoryPath))
-                        DirectoryOperations.Delete(diffBackupDirectoryPath, Properties.IncludeSubDirectories);
+                        DirectoryOperations.TryDelete(diffBackupDirectoryPath, Properties.IncludeSubDirectories);
 
                     return new BackupTaskResult(BackupMode.Full, Properties, string.Empty);
                 }
@@ -112,6 +116,8 @@ namespace Masasamjant.FileSystems.Backups
                 {
                     CurrentDirectoryPath = sourceFile.DirectoryName;
                     CurrentFilePath = sourceFile.FullName;
+
+                    // Create destination file path.
                     var destinationFileName = sourceFile.Name;
                     var destinationFilePath = Path.Combine(backupDirectoryPath, destinationFileName);
 
@@ -128,8 +134,13 @@ namespace Masasamjant.FileSystems.Backups
 
                     if (createBackup)
                     {
+                        // Create the actual backup.
                         CreateBackup(sourceFile, destinationFilePath, backupDirectoryPath, ref createDirectory);
+
+                        // Store backup history.
                         history.Set(sourceFile.FullName, sourceFileHash);
+
+                        // Raise event to notify that backup was done.
                         OnFileBackup(new BackupTaskFileEventArgs(backupDirectoryPath, destinationFilePath, CurrentDirectoryPath, CurrentFilePath));
                     }
                 }
@@ -137,6 +148,8 @@ namespace Masasamjant.FileSystems.Backups
                 {
                     var args = HandleBackupFileError(exception);
 
+                    // Check if error was handled and if should cancel or continue.
+                    // If not handler then throw exception and base class will either cancel or flag as error.
                     if (args.Handled)
                     {
                         if (args.ErrorBehavior == BackupTaskErrorBehavior.Cancel)
@@ -157,6 +170,7 @@ namespace Masasamjant.FileSystems.Backups
                 }
             }
 
+            // Save backup history.
             BackupHistory.Save(history, backupDirectoryPath, FileOperations);
 
             // If sub directories should be included in backup, then iterate all child directories.
@@ -169,6 +183,7 @@ namespace Masasamjant.FileSystems.Backups
                     // Since there are some child directories, lets ensure that parent backup directory is created.
                     EnsureCreateDirectory(backupDirectoryPath, ref createDirectory);
 
+                    // Backup each child directory and eventually the whole tree.
                     foreach (var childDirectory in childDirectories)
                     {
                         var childBackupDirectoryPath = Path.Combine(backupDirectoryPath, childDirectory.Name);

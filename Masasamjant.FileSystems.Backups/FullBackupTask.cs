@@ -90,17 +90,29 @@ namespace Masasamjant.FileSystems.Backups
                 {
                     CurrentDirectoryPath = sourceFile.DirectoryName;
                     CurrentFilePath = sourceFile.FullName;
+
+                    // Create destination file path.
                     var destinationFileName = sourceFile.Name;
                     var destinationFilePath = Path.Combine(backupDirectoryPath, destinationFileName);
+                    
+                    // Compute source file hash for history.
                     var sourceFileHash = ComputeFileHash(sourceFile);
+                    
+                    // Create the actual backup.
                     CreateBackup(sourceFile, destinationFilePath, backupDirectoryPath, ref createDirectory);
+                    
+                    // Store backup history.
                     history.Set(sourceFile.FullName, sourceFileHash);
+                    
+                    // Raise event to notify that backup was done.
                     OnFileBackup(new BackupTaskFileEventArgs(backupDirectoryPath, destinationFilePath, CurrentDirectoryPath, CurrentFilePath));
                 }
                 catch (Exception exception)
                 {
                     var args = HandleBackupFileError(exception);
 
+                    // Check if error was handled and if should cancel or continue.
+                    // If not handler then throw exception and base class will either cancel or flag as error.
                     if (args.Handled)
                     {
                         if (args.ErrorBehavior == BackupTaskErrorBehavior.Cancel)
@@ -123,6 +135,7 @@ namespace Masasamjant.FileSystems.Backups
                 }
             }
 
+            // Save backup history. This is needed if differential/incremental backup is started to create based on this backup.
             BackupHistory.Save(history, backupDirectoryPath, FileOperations);
 
             // If sub directories should be included in backup, then iterate all child directories.

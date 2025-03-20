@@ -138,26 +138,37 @@ namespace Masasamjant.FileSystems.Backups
                 CurrentDirectoryPath = null;
                 CurrentFilePath = null;
 
+                // Change state to pre-executing.
                 SetState(BackupTaskState.PreExecuting, true);
 
+                // If task was not canceled by event handlers, then continue.
                 if (!IsCanceled)
                 {
+                    // Perform pre-execution initialization.
                     PreExecute();
 
+                    // Change state to execution.
                     SetState(BackupTaskState.Executing, true);
 
+                    // If task was not canceled by event handlers, then continue.
                     if (!IsCanceled)
                     {
+                        // Execute task.
                         result = Execute();
                         SetState(BackupTaskState.PostExecuting, false);
+                        
+                        // Perform post-execution cleanup.
                         PostExecute();
                     }
                 }
             }
             catch (Exception exception)
             {
+                // Raise error event to give possibility to resolve error.
                 var args = new BackupTaskErrorEventArgs(exception, State, CurrentDirectoryPath, CurrentFilePath);
                 OnError(args);
+
+                // Check if error was handled and cancel requested. If not then indicate error.
                 if (args.Handled && args.ErrorBehavior == BackupTaskErrorBehavior.Cancel)
                     IsCanceled = true;
                 else
@@ -167,9 +178,11 @@ namespace Masasamjant.FileSystems.Backups
             {
                 BackupTaskState finalState;
 
+                // If canceled or result not yet set, then create empty result.
                 if (IsCanceled || result == null)
                     result = new BackupTaskResult(Properties.BackupMode, Properties, string.Empty);
 
+                // Check final state.
                 if (error)
                     finalState = BackupTaskState.Failed;
                 else if (IsCanceled)
@@ -177,6 +190,7 @@ namespace Masasamjant.FileSystems.Backups
                 else
                     finalState = BackupTaskState.Completed;
 
+                // Set final state.
                 SetState(finalState, false);
                 result.SetFinalState(finalState);
             }

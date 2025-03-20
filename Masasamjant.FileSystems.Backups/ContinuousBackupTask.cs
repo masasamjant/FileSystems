@@ -33,6 +33,9 @@ namespace Masasamjant.FileSystems.Backups
             FullBackupDirectory = fullBackupDirectory;
         }
 
+        /// <summary>
+        /// Gets the <see cref="IDirectoryInfo"/> of the base full backup.
+        /// </summary>
         public IDirectoryInfo? FullBackupDirectory { get; }
 
         protected override void PreExecute()
@@ -53,6 +56,8 @@ namespace Masasamjant.FileSystems.Backups
             var sourceDirectory = DirectoryOperations.GetDirectory(Properties.SourceDirectoryPath);
             string? fullBackupDirectoryPath;
 
+            // If there is full backup directory, then we continue using that.
+            // Otherwise will create new directory.
             if (FullBackupDirectory != null)
                 fullBackupDirectoryPath = FullBackupDirectory.FullName;
             else
@@ -62,8 +67,10 @@ namespace Masasamjant.FileSystems.Backups
                 fullBackupDirectoryPath = Path.Combine(destinationDirectory.FullName, fullBackupDirectoryPath);
             }
 
+            // Backup root directory.
             BackupDirectory(sourceDirectory, fullBackupDirectoryPath);
 
+            // Check if canceled. But do not delete backup folder since we continue use that.
             if (IsCanceled)
                 return new BackupTaskResult(BackupMode.Continuous, Properties, string.Empty);
 
@@ -91,22 +98,35 @@ namespace Masasamjant.FileSystems.Backups
                 {
                     CurrentDirectoryPath = sourceFile.DirectoryName;
                     CurrentFilePath = sourceFile.FullName;
+
+                    // Create destination file path.
                     var destinationFileName = sourceFile.Name;
                     var destinationFilePath = Path.Combine(backupDirectoryPath, destinationFileName);
+
+                    // Compute hash used to verify if file needs backup or not.
                     var sourceFileHash = ComputeFileHash(sourceFile);
 
+                    // Create backup if no history or file has changed since added to history.
                     bool createBackup = noBackupHistory || !history.Contains(sourceFile.FullName) || sourceFileHash != history.Get(sourceFile.FullName);
 
                     if (createBackup)
                     {
+                        // Create the actual backup.
                         CreateBackup(sourceFile, destinationFilePath, backupDirectoryPath, ref createDirectory);
+
+                        // Store backup history.
                         history.Set(sourceFile.FullName, sourceFileHash);
+
+                        // Raise event to notify that backup was done.
                         OnFileBackup(new BackupTaskFileEventArgs(backupDirectoryPath, destinationFilePath, CurrentDirectoryPath, CurrentFilePath));
                     }
                 }
                 catch (Exception exception)
                 {
                     var args = HandleBackupFileError(exception);
+
+                    // Check if error was handled and if should cancel or continue.
+                    // If not handler then throw exception and base class will either cancel or flag as error.
                     if (args.Handled)
                     {
                         if (args.ErrorBehavior == BackupTaskErrorBehavior.Cancel)
@@ -127,16 +147,20 @@ namespace Masasamjant.FileSystems.Backups
                 }
             }
 
+            // Save backup history.
             BackupHistory.Save(history, backupDirectoryPath, FileOperations);
 
+            // If sub directories should be included in backup, then iterate all child directories.
             if (Properties.IncludeSubDirectories)
             {
                 var childDirectories = sourceDirectory.GetDirectories();
 
                 if (childDirectories.Any())
                 {
+                    // Since there are some child directories, lets ensure that parent backup directory is created.
                     EnsureCreateDirectory(backupDirectoryPath, ref createDirectory);
 
+                    // Backup each child directory and eventually the whole tree.
                     foreach (var childDirectory in childDirectories)
                     {
                         var childBAckupDirectoryPath = Path.Combine(backupDirectoryPath, childDirectory.Name);
