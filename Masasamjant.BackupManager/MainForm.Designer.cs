@@ -53,6 +53,9 @@
             exitToolStripMenuItem = new ToolStripMenuItem();
             savePropertiesDialog = new SaveFileDialog();
             openPropertiesDialog = new OpenFileDialog();
+            helpToolStripMenuItem = new ToolStripMenuItem();
+            viewHelpToolStripMenuItem = new ToolStripMenuItem();
+            aboutToolStripMenuItem = new ToolStripMenuItem();
             groupBoxTask.SuspendLayout();
             groupBoxFiles.SuspendLayout();
             mainMenu.SuspendLayout();
@@ -226,7 +229,7 @@
             // 
             // mainMenu
             // 
-            mainMenu.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem });
+            mainMenu.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, helpToolStripMenuItem });
             mainMenu.Location = new Point(0, 0);
             mainMenu.Name = "mainMenu";
             mainMenu.Size = new Size(871, 24);
@@ -243,21 +246,41 @@
             // openToolStripMenuItem
             // 
             openToolStripMenuItem.Name = "openToolStripMenuItem";
-            openToolStripMenuItem.Size = new Size(180, 22);
+            openToolStripMenuItem.Size = new Size(103, 22);
             openToolStripMenuItem.Text = "Open";
             openToolStripMenuItem.Click += openToolStripMenuItem_Click;
             // 
             // toolStripSeparator1
             // 
             toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new Size(177, 6);
+            toolStripSeparator1.Size = new Size(100, 6);
             // 
             // exitToolStripMenuItem
             // 
             exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            exitToolStripMenuItem.Size = new Size(180, 22);
+            exitToolStripMenuItem.Size = new Size(103, 22);
             exitToolStripMenuItem.Text = "Exit";
             exitToolStripMenuItem.Click += exitToolStripMenuItem_Click;
+            // 
+            // helpToolStripMenuItem
+            // 
+            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { viewHelpToolStripMenuItem, aboutToolStripMenuItem });
+            helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+            helpToolStripMenuItem.Size = new Size(44, 20);
+            helpToolStripMenuItem.Text = "Help";
+            // 
+            // viewHelpToolStripMenuItem
+            // 
+            viewHelpToolStripMenuItem.Name = "viewHelpToolStripMenuItem";
+            viewHelpToolStripMenuItem.Size = new Size(180, 22);
+            viewHelpToolStripMenuItem.Text = "View Help";
+            // 
+            // aboutToolStripMenuItem
+            // 
+            aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+            aboutToolStripMenuItem.Size = new Size(180, 22);
+            aboutToolStripMenuItem.Text = "About";
+            aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
             // 
             // MainForm
             // 
@@ -306,5 +329,8 @@
         private ToolStripMenuItem exitToolStripMenuItem;
         private SaveFileDialog savePropertiesDialog;
         private OpenFileDialog openPropertiesDialog;
+        private ToolStripMenuItem helpToolStripMenuItem;
+        private ToolStripMenuItem viewHelpToolStripMenuItem;
+        private ToolStripMenuItem aboutToolStripMenuItem;
     }
 }

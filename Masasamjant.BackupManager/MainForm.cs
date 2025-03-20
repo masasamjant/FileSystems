@@ -1,3 +1,4 @@
+using Masasamjant.BackupManager.Dialogs;
 using Masasamjant.FileSystems;
 using Masasamjant.FileSystems.Abstractions;
 using Masasamjant.FileSystems.Backups;
@@ -153,7 +154,7 @@ namespace Masasamjant.BackupManager
                     json = reader.ReadToEnd();
                 }
 
-                var properties  = JsonSerializer.Deserialize(json, typeof(BackupProperties)) as BackupProperties;
+                var properties = JsonSerializer.Deserialize(json, typeof(BackupProperties)) as BackupProperties;
 
                 if (properties != null)
                 {
@@ -182,6 +183,12 @@ namespace Masasamjant.BackupManager
             var settings = Properties.Settings.Default;
             settings.LatestBackupTaskFolder = directoryPath;
             settings.Save();
+        }
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var dialog = new AboutDialog())
+                dialog.ShowDialog();
         }
     }
 }
