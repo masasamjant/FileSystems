@@ -18,7 +18,7 @@
 
         /// <summary>
         /// Create incremental backup from source folder. Backup all modified or 
-        /// created files ince latest incremental backup.
+        /// created files since latest incremental backup.
         /// </summary>
         Incremental = 2,
 

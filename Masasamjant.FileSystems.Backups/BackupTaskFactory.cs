@@ -48,8 +48,8 @@ namespace Masasamjant.FileSystems.Backups
             { 
                 var timestamp = BackupTask.GetFullBackupTimestamp(latestFullBackupDirectory);
                 var directories = destinationDirectory.GetDirectories();
-                var incrementalBackupDirectories = directories.Where(directory => directory.Name.Contains(destinationDirectory.Name) &&
-                    directory.Name.Contains("_I_") && directory.Name.Contains(timestamp)).OrderBy(directory => directory.CreationTime).ToList();
+                var incrementalBackupDirectories = directories.Where(directory => directory.Name.Contains("_I_") && 
+                    directory.Name.Contains(timestamp)).OrderBy(directory => directory.CreationTime).ToList();
                 
                 // If there is no incremental directories created from full backup, then stars new incremental chain.
                 bool validIncrementalBackupChain = incrementalBackupDirectories.Count == 0;
