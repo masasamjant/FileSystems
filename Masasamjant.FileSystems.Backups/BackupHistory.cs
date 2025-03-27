@@ -9,7 +9,6 @@ namespace Masasamjant.FileSystems.Backups
     /// </summary>
     internal sealed class BackupHistory
     {
-        private const string BackupHistoryFileName = "__BackupHistory.txt";
         private const string SHAPrefix = "SHA-";
 
         private Dictionary<string, string> Items { get; } = new Dictionary<string, string>();
@@ -55,7 +54,7 @@ namespace Masasamjant.FileSystems.Backups
         /// <returns>A loaded or new <see cref="BackupHistory"/>.</returns>
         public static BackupHistory Load(string backupDirectoryPath, IFileOperations fileOperations)
         {
-            string backupHistoryFilePath = Path.Combine(backupDirectoryPath, BackupHistoryFileName);
+            string backupHistoryFilePath = Path.Combine(backupDirectoryPath, GetHistoryFileName(backupDirectoryPath));
 
             BackupHistory history = new BackupHistory();
 
@@ -104,7 +103,7 @@ namespace Masasamjant.FileSystems.Backups
             if (history.Count == 0)
                 return;
 
-            var backupHistoryFilePath = Path.Combine(backupDirectoryPath, BackupHistoryFileName);
+            var backupHistoryFilePath = Path.Combine(backupDirectoryPath, GetHistoryFileName(backupDirectoryPath));
 
             if (fileOperations.Exists(backupHistoryFilePath))
                 BackupTask.RemoveHiddenReadOnlyAttribute(backupHistoryFilePath, fileOperations);
@@ -148,6 +147,17 @@ namespace Masasamjant.FileSystems.Backups
             byte[] buffer = Encoding.Unicode.GetBytes(content);
             byte[] hash = SHA256.HashData(buffer);
             return Convert.ToBase64String(hash);
+        }
+
+        private static string GetHistoryFileName(string backupDirectoryPath)
+        {
+            byte[] buffer = Encoding.Unicode.GetBytes(backupDirectoryPath);
+            buffer = SHA1.HashData(buffer);
+            var hash = Convert.ToBase64String(buffer);
+            var replace = hash.Where(c => !char.IsLetter(c) && !char.IsAsciiDigit(c)).ToArray();
+            foreach (var c in replace)
+                hash = hash.Replace(c, '0');
+            return hash.ToUpperInvariant() + ".hst";
         }
     }
 }
