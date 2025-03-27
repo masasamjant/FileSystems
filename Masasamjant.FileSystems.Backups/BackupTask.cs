@@ -165,7 +165,7 @@ namespace Masasamjant.FileSystems.Backups
             catch (Exception exception)
             {
                 // Raise error event to give possibility to resolve error.
-                var args = new BackupTaskErrorEventArgs(exception, State, CurrentDirectoryPath, CurrentFilePath);
+                var args = new BackupTaskErrorEventArgs(Properties, exception, State, CurrentDirectoryPath, CurrentFilePath);
                 OnError(args);
 
                 // Check if error was handled and cancel requested. If not then indicate error.
@@ -307,7 +307,7 @@ namespace Masasamjant.FileSystems.Backups
         /// <returns>A <see cref="BackupTaskErrorEventArgs"/>.</returns>
         protected BackupTaskErrorEventArgs HandleBackupFileError(Exception exception)
         {
-            var args = new BackupTaskErrorEventArgs(exception, State, CurrentDirectoryPath, CurrentFilePath);
+            var args = new BackupTaskErrorEventArgs(Properties, exception, State, CurrentDirectoryPath, CurrentFilePath);
             OnError(args);
             return args;
         }
@@ -387,7 +387,7 @@ namespace Masasamjant.FileSystems.Backups
             if (State != state)
             {
                 State = state;
-                var args = new BackupTaskStateChangedEventArgs(State, CurrentDirectoryPath, CurrentFilePath, canCancel);
+                var args = new BackupTaskStateChangedEventArgs(Properties, State, CurrentDirectoryPath, CurrentFilePath, canCancel);
                 OnStateChanged(args);
                 if (args.CanCancel && args.Cancel)
                     IsCanceled = true;

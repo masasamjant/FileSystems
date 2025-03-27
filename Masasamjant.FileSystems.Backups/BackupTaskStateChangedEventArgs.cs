@@ -8,12 +8,13 @@
         /// <summary>
         /// Initializes new instance of the <see cref="BackupTaskStateChangedEventArgs"/> class.
         /// </summary>
+        /// <param name="properties">The properties of backup task.</param>
         /// <param name="currentState">The current backup task state.</param>
         /// <param name="currentDirectoryPath">The current directory path or <c>null</c>, if not processing directory.</param>
         /// <param name="currentFilePath">The current file path or <c>null</c>, if not processing file.</param>
         /// <param name="canCancel"><c>true</c> if task can be canceled in this event; <c>false</c> otherwise.</param>
-        internal BackupTaskStateChangedEventArgs(BackupTaskState currentState, string? currentDirectoryPath, string? currentFilePath, bool canCancel)
-            : base(currentDirectoryPath, currentFilePath, canCancel)
+        internal BackupTaskStateChangedEventArgs(BackupProperties properties, BackupTaskState currentState, string? currentDirectoryPath, string? currentFilePath, bool canCancel)
+            : base(properties, currentDirectoryPath, currentFilePath, canCancel)
         {
             CurrentState = currentState;
         }

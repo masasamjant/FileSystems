@@ -10,12 +10,13 @@
         /// <summary>
         /// Initializes new instance of the <see cref="BackupTaskErrorEventArgs"/> class.
         /// </summary>
+        /// <param name="properties">The properties of backup task.</param>
         /// <param name="error">The exception of the error.</param>
         /// <param name="currentState">The current state of the task.</param>
         /// <param name="currentDirectoryPath">The current directory path or <c>null</c>, if not processing directory.</param>
         /// <param name="currentFilePath">The current file path or <c>null</c>, if not processing file.</param>
-        internal BackupTaskErrorEventArgs(Exception error, BackupTaskState currentState, string? currentDirectoryPath, string? currentFilePath)
-            : base(currentDirectoryPath, currentFilePath, true)
+        internal BackupTaskErrorEventArgs(BackupProperties properties, Exception error, BackupTaskState currentState, string? currentDirectoryPath, string? currentFilePath)
+            : base(properties, currentDirectoryPath, currentFilePath, true)
         {
             Error = error;
             Handled = false;

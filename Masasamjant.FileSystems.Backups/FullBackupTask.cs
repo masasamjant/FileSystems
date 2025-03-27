@@ -105,7 +105,7 @@ namespace Masasamjant.FileSystems.Backups
                     history.Set(sourceFile.FullName, sourceFileHash);
                     
                     // Raise event to notify that backup was done.
-                    OnFileBackup(new BackupTaskFileEventArgs(backupDirectoryPath, destinationFilePath, CurrentDirectoryPath, CurrentFilePath));
+                    OnFileBackup(new BackupTaskFileEventArgs(Properties, backupDirectoryPath, destinationFilePath, CurrentDirectoryPath, CurrentFilePath));
                 }
                 catch (Exception exception)
                 {

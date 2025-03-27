@@ -8,15 +8,22 @@
         /// <summary>
         /// Initializes new instance of the <see cref="BackupTaskEventArgs"/> class.
         /// </summary>
+        /// <param name="properties">The properties of backup task.</param>
         /// <param name="currentDirectoryPath">The current directory path or <c>null</c>, if not processing directory.</param>
         /// <param name="currentFilePath">The current file path or <c>null</c>, if not processing file.</param>
         /// <param name="canCancel"><c>true</c> if task can be canceled in this event; <c>false</c> otherwise.</param>
-        protected BackupTaskEventArgs(string? currentDirectoryPath, string? currentFilePath, bool canCancel)
+        protected BackupTaskEventArgs(BackupProperties properties, string? currentDirectoryPath, string? currentFilePath, bool canCancel)
         {
+            Properties = properties;
             CurrentDirectoryPath = currentDirectoryPath;
             CurrentFilePath = currentFilePath;
             CanCancel = canCancel;
         }
+
+        /// <summary>
+        /// Gets the properties of backup task.
+        /// </summary>
+        public BackupProperties Properties { get; }
 
         /// <summary>
         /// Gets the current directory path or <c>null</c>, if not processing folder.
