@@ -14,7 +14,7 @@ namespace Masasamjant.FileSystems.Adapters
         /// </summary>
         /// <param name="drive">The <see cref="DriveInfo"/> to adapt.</param>
         /// <param name="driveOperations">The <see cref="IDriveOperations"/>.</param>
-        internal DriveInfoAdapter(DriveInfo drive, IDriveOperations driveOperations)
+        public DriveInfoAdapter(DriveInfo drive, IDriveOperations driveOperations)
         {
             Drive = drive;
             DriveOperations = driveOperations;

@@ -1,13 +1,4 @@
 ﻿using Masasamjant.FileSystems.Backups;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace Masasamjant.BackupManager.Dialogs
 {
@@ -34,7 +25,40 @@ namespace Masasamjant.BackupManager.Dialogs
 
         private void FillFromError(BackupTaskErrorEventArgs error)
         {
+            textMessage.Text = error.Error.Message;
+            textState.Text = error.CurrentState.ToString();
 
+            if (!string.IsNullOrWhiteSpace(error.CurrentDirectoryPath))
+                textDirectory.Text = error.CurrentDirectoryPath;
+
+            if (!string.IsNullOrWhiteSpace(error.CurrentFilePath))
+                textFile.Text = error.CurrentFilePath;
+
+            checkBoxCancel.Enabled = error.CanCancel;
+        }
+
+        private void checkBoxCancel_CheckedChanged(object sender, EventArgs e)
+        {
+            if (Error != null)
+                Error.Cancel = Error.CanCancel && checkBoxCancel.Checked;
+        }
+
+        private void buttonIgnore_Click(object sender, EventArgs e)
+        {
+            if (Error != null)
+                Error.Handled = false;
+
+            DialogResult = DialogResult.No;
+            Close();
+        }
+
+        private void buttonOk_Click(object sender, EventArgs e)
+        {
+            if (Error != null)
+                Error.Handled = true;
+
+            DialogResult = DialogResult.OK;
+            Close();
         }
     }
 }

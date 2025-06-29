@@ -12,7 +12,7 @@ namespace Masasamjant.FileSystems.Adapters
         /// </summary>
         /// <param name="file">The <see cref="FileInfo"/> to adapt.</param>
         /// <param name="fileOperations">The <see cref="IFileOperations"/>.</param>
-        internal FileInfoAdapter(FileInfo file, IFileOperations fileOperations)
+        public FileInfoAdapter(FileInfo file, IFileOperations fileOperations)
         {
             FileOperations = fileOperations;
             File = file;

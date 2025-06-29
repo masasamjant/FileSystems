@@ -17,6 +17,16 @@ namespace Masasamjant.FileSystems
         { }
 
         /// <summary>
+        /// Gets drive specified by name.
+        /// </summary>
+        /// <param name="name">The drive name.</param>
+        /// <returns>A <see cref="IDriveInfo"/> or <c>null</c>.</returns>
+        public IDriveInfo? GetDrive(string name)
+        {
+            return GetDrives().FirstOrDefault(s => s.Name == name);
+        }
+
+        /// <summary>
         /// Gets current drives.
         /// </summary>
         /// <returns>A current drives.</returns>

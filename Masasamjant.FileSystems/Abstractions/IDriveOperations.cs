@@ -32,5 +32,12 @@
         /// <returns>A current ready drives.</returns>
         /// <remarks>If <paramref name="driveType"/> is not defined, then gets fixed drives.</remarks>
         IEnumerable<IDriveInfo> GetReadyDrives(DriveType driveType);
+
+        /// <summary>
+        /// Gets drive specified by name.
+        /// </summary>
+        /// <param name="name">The drive name.</param>
+        /// <returns>A <see cref="IDriveInfo"/> or <c>null</c>.</returns>
+        IDriveInfo? GetDrive(string name);
     }
 }

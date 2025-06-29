@@ -12,7 +12,7 @@ namespace Masasamjant.FileSystems.Adapters
         /// </summary>
         /// <param name="directory">The <see cref="DirectoryInfo"/> to adapt.</param>
         /// <param name="directoryOperations">The <see cref="IDirectoryOperations"/>.</param>
-        internal DirectoryInfoAdapter(DirectoryInfo directory, IDirectoryOperations directoryOperations)
+        public DirectoryInfoAdapter(DirectoryInfo directory, IDirectoryOperations directoryOperations)
         {
             Directory = directory;
             DirectoryOperations = directoryOperations;

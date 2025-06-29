@@ -65,6 +65,8 @@ namespace Masasamjant.BackupManager
 
         private void OnBackupTaskError(object? sender, BackupTaskErrorEventArgs e)
         {
+            BackupTask? task = sender as BackupTask;
+
             using (var dialog = new ErrorDialog(e))
             {
                 if (dialog.ShowDialog() == DialogResult.OK)
@@ -72,7 +74,9 @@ namespace Masasamjant.BackupManager
                     e.Handled = true;
                 }
                 else
+                {
                     e.Handled = false;
+                }
             }
         }
 
