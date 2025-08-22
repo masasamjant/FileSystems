@@ -141,7 +141,14 @@ namespace Masasamjant.FileSystems.Adapters
             if (string.IsNullOrWhiteSpace(path))
                 throw new ArgumentNullException(nameof(path), "The directory path cannot be empty or only white-space.");
 
-            return new DirectoryInfoAdapter(Directory.CreateSubdirectory(path), DirectoryOperations);
+            if (path.StartsWith(FullName))
+                path = path.Replace(FullName, string.Empty);
+
+            if (path.StartsWith('\\'))
+                path = path.TrimStart('\\');
+
+            var subDirectory = Directory.CreateSubdirectory(path);
+            return new DirectoryInfoAdapter(subDirectory, DirectoryOperations);
         }
 
         /// <summary>
