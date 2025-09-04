@@ -9,8 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Masasamjant.FileSystems.Backups\Masasamjant.FileSystems.Backups.csproj" />
-    <ProjectReference Include="..\Masasamjant.FileSystems\Masasamjant.FileSystems.csproj" />
+    <PackageReference Include="Masasamjant.FileSystems.Backups" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>
