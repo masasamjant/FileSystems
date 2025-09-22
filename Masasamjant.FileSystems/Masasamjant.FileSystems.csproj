@@ -12,9 +12,11 @@
     <RepositoryUrl>https://github.com/masasamjant/FileSystems</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Authors>Matti Jantti</Authors>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <IncludeSymbols>True</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
