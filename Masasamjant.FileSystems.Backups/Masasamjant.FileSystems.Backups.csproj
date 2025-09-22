@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Title>Masasamjant.FileSystems.Backups</Title>
+    <Title>Masasamjant File System Backups</Title>
     <Version>1.0.0</Version>
     <Authors>Matti Jantti</Authors>
     <Description>Class library to to create file or directory backups</Description>
@@ -19,10 +19,6 @@
 
   <ItemGroup>
     <None Include="..\Masasamjant.FileSystems\LICENSE.txt">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Include="..\Masasamjant.FileSystems\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
