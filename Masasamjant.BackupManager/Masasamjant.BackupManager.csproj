@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Masasamjant.FileSystems.Backups\Masasamjant.FileSystems.Backups.csproj" />
+    <ProjectReference Include="..\Masasamjant.FileSystems\Masasamjant.FileSystems.csproj" />
   </ItemGroup>
 
   <ItemGroup>
