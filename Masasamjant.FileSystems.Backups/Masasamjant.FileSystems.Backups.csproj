@@ -20,7 +20,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Masasamjant.FileSystems" Version="1.1.1" />
+    <PackageReference Include="Masasamjant.FileSystems" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
